@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""v.12 — GMATDebriefs.
+"""v.13 — GMATDebriefs.
 
 Presentation only. Reads debriefs.json (enriched by enrich.py) + post_details.json
 (per-post detail model built by build_detail.py) and writes a self-contained
-dashboard_v12.html.
+dashboard_v13.html.
+
+What changed vs v12: tactic labels are rebuilt from the author's own post/replies
+instead of carried over from the older v11 strategy labels. Vendor tactics now
+require explicit author-side evidence, and the tactic charts/heatmap use clearer
+groups across section skills, resources, review loops, section order, and mindset.
 
 What changed vs v11 (the v.12 brief): clicking a post no longer jumps straight to
 the forum. It opens an in-page **post detail** page first, with a Back button, an
@@ -27,7 +32,7 @@ Run build_detail.py before this script.
      Focus scores (every stop ends in 5).
   6. Charts: shared palette, click-to-drill-down, cleaner axes/tooltips (score
      distribution, weak section by tier, realistic-jump gains, resources, prep-vs-gain
-     scatter, Reddit-only tactics heatmap).
+     scatter, tactics heatmap).
 
 Sponsor classification + prep-time/date/resource backfill all live in enrich.py now,
 so this file is pure rendering — `tags` and `sreason` arrive ready to display.
@@ -97,8 +102,8 @@ def main():
         # can use normal single braces (no doubling needed).
         detail_css=DETAIL_CSS, detail_js=DETAIL_JS, details_js=details_js,
     )
-    (BASE / "dashboard_v12.html").write_text(html)
-    print(f"dashboard_v12.html written. {len(debriefs)} posts, {n_deb} debriefs, "
+    (BASE / "dashboard_v13.html").write_text(html)
+    print(f"dashboard_v13.html written. {len(debriefs)} posts, {n_deb} debriefs, "
           f"{len(details)} detail pages.")
 
 
@@ -319,8 +324,8 @@ th:hover{{color:var(--text)}}
   </div>
 
   <div class="nt warn"><b>How to read this:</b> charts marked <b>(debriefs)</b> count only people who actually
-  <b>achieved</b> the score &mdash; not those still asking how to get there. "With vs without" bars compare the
-  median score of people who mentioned a tactic against everyone else. Small samples + keyword matching =
+  <b>achieved</b> the score &mdash; not those still asking how to get there. Tactic labels are assigned from the
+  author's own post and replies; vendor labels require a direct author mention. Small samples + rule-based matching =
   <b>directional, not proof</b>. Tactics need &ge;4 users to appear.</div>
 
   <!-- sticky filter toolbar -->
@@ -361,22 +366,22 @@ th:hover{{color:var(--text)}}
   <div id="statsRow" class="sts"></div>
 
   <div class="gr">
-    <div class="cd"><h2>Total score distribution</h2><div class="sub">How many posts landed at each score. All posts in the current filter. Click a bar to read them.</div><canvas id="c1"></canvas></div>
-    <div class="cd"><h2>Where each tier's weak spot is</h2><div class="sub">Median Q / V / DI for each score band (debriefs). The <b>shortest bar</b> in a band is the section holding that tier back.</div><canvas id="c2"></canvas></div>
+    <div class="cd"><h2>Total score distribution</h2><div class="sub">Shows how filtered posts are spread across official scores. Taller bars mean more examples at that score; click a bar to read the matching posts.</div><canvas id="c1"></canvas></div>
+    <div class="cd"><h2>Where each tier's weak spot is</h2><div class="sub">Compares median Q, V, and DI inside each score band. Read one band at a time: the shortest bar is usually the section that kept that tier from moving higher.</div><canvas id="c2"></canvas></div>
   </div>
 
   <div class="gr">
-    <div class="cd"><h2>How big a jump is realistic?</h2><div class="sub">Score improvement (start&rarr;official) reported in debriefs, bucketed. Answers the question everyone asks: how far can I realistically move? Click a bar to read those debriefs.</div><canvas id="cGain"></canvas></div>
-    <div class="cd"><h2>Resources used</h2><div class="sub">How often each resource is mentioned by people who hit 650+ (debriefs). Pure popularity. Click to read them.</div><canvas id="cFreq"></canvas></div>
+    <div class="cd"><h2>How big a jump is realistic?</h2><div class="sub">Buckets reported start-to-official score gains. This shows the size of moves people actually described; click a bucket to inspect the debriefs behind it.</div><canvas id="cGain"></canvas></div>
+    <div class="cd"><h2>Resources used</h2><div class="sub">Counts named resources among achieved-score debriefs. This is popularity, not effectiveness; click a resource to see how people used it.</div><canvas id="cFreq"></canvas></div>
   </div>
 
   <div class="gr">
-    <div class="cd tall"><h2>Prep time vs score change</h2><div class="sub">Each dot is a debrief that reported <b>both</b> weeks studied and a start&rarr;official jump. X = weeks of prep, Y = points gained, color = final score. Dashed line = best-fit trend. Click a dot to open the post.</div><canvas id="c3"></canvas></div>
-    <div class="cd"><h2>Does more study time help?</h2><div class="sub">Median achieved score per prep-time bucket (debriefs). Hover for sample size; click to read them.</div><canvas id="c5"></canvas></div>
+    <div class="cd tall"><h2>Prep time vs score change</h2><div class="sub">Plots debriefs that report both prep length and score gain. X = weeks studied, Y = points gained, color = final score; the dashed line shows the overall trend.</div><canvas id="c3"></canvas></div>
+    <div class="cd"><h2>Does more study time help?</h2><div class="sub">Shows the median achieved score for each prep-time bucket. Use it to compare broad ranges, then hover for sample size or click to read examples.</div><canvas id="c5"></canvas></div>
   </div>
 
   <div class="gr full">
-    <div class="cd"><h2>What score do each section's tactics go with?</h2><div class="sub">Bars = <b>median total score</b> of debriefs that mention each tactic (&ge;4 users), sorted high&rarr;low. The <b>dashed line is the overall median</b> &mdash; a bar to its right means that tactic's users tend to score higher. <b>Correlation, not proof.</b> Click a bar to read those posts.</div>
+    <div class="cd"><h2>Which section tactics show up with higher scores?</h2><div class="sub">Each bar is the median total score for debriefs that used that section tactic. The dashed line is the filtered median; bars to the right are associated with stronger outcomes, not guaranteed causes.</div>
       <div class="trio">
         <div><div class="seclbl" style="color:#38bdf8">Quant</div><canvas id="c4q"></canvas></div>
         <div><div class="seclbl" style="color:#a78bfa">Verbal</div><canvas id="c4v"></canvas></div>
@@ -386,7 +391,7 @@ th:hover{{color:var(--text)}}
   </div>
 
   <div class="gr full">
-    <div class="cd"><h2>What each score tier actually did</h2><div class="sub">% of debriefs <b>in each band</b> that mentioned the tactic. Read a <b>column</b> top-to-bottom to see one tier's playbook; darker = more common. (Reddit debriefs only — tactic tags aren't extracted for GMAT Club yet.)</div>
+    <div class="cd"><h2>What each score tier actually did</h2><div class="sub">Shows the share of debriefs in each band that used each tactic. Read down a column to see that tier's common playbook; darker cells mean the tactic appeared more often.</div>
       <div class="ov"><div id="heatmap"></div></div>
       <div class="legend"><span>0%</span><span class="sw" style="background:rgba(56,189,248,.08)"></span><span class="sw" style="background:rgba(56,189,248,.4)"></span><span class="sw" style="background:rgba(56,189,248,.75)"></span><span class="sw" style="background:rgba(56,189,248,1)"></span><span>most common</span></div>
     </div>
@@ -426,7 +431,7 @@ th:hover{{color:var(--text)}}
     <h3>Honest limits</h3>
     <ul>
       <li>Samples are small and matching is keyword-based &mdash; treat everything as <b>directional, not proof</b>.</li>
-      <li>Tactic-level tags (the heatmap) are extracted for Reddit debriefs only, to keep that view consistent.</li>
+      <li>Tactic-level tags come from the author's post and own replies; other commenters are ignored for these labels.</li>
     </ul>
   </div>
 
@@ -569,22 +574,36 @@ function tHTML(tags,sreason){{return(tags||[]).map(t=>{{let tip=TT[t]||t;if(t===
 const BANDS=[['650-689',650,689],['690-719',690,719],['720-749',720,749],['750-805',750,805]];
 
 const GLOSS={{
-'Q: DS mastery':'Data Sufficiency mastery — drilling the DS question type until its logic is automatic',
-'Q: OG practice':'Practicing with the Official Guide, GMAC’s book of real retired GMAT questions',
-'Q: TTP grind':'Grinding through Target Test Prep, a structured self-paced online course (strong for Quant)',
-'Q: error log':'Keeping an error log — logging every missed question to find and fix recurring weak spots',
-'Q: foundations rebuild':'Rebuilding core math fundamentals before moving on to harder practice',
-'Q: timed sets':'Practicing questions in timed batches to build speed under exam-like conditions',
-'Q: timing/pacing':'Pacing work — managing the clock so you don’t run out of time in a section',
-'V: CR frameworks':'Using structured frameworks to break down Critical Reasoning arguments',
-'V: GMAT Ninja':'Studying with GMAT Ninja’s free Verbal YouTube videos (and paid tutoring)',
-'V: RC active reading':'Active-reading techniques for Reading Comprehension passages',
-'V: verbal course':'Taking a dedicated Verbal-focused prep course',
-'DI: DI practice':'General practice on the Data Insights section',
-'DI: DS-first':'Doing the Data Sufficiency-style DI questions first',
-'DI: MSR drilling':'Drilling Multi-Source Reasoning, the multi-tab DI question type',
-'DI: graphics/table':'Practicing Graphics Interpretation and Table Analysis DI questions',
-'DI: master Q+V first':'Building Quant and Verbal skills first, since DI draws on both',
+'Q: TTP Quant course':'Author explicitly mentions using Target Test Prep in a Quant or math-prep context.',
+'Q: GMAT Club Quant sets':'Using GMAT Club questions, quizzes, tests, or sectionals for Quant practice.',
+'Q: Official Guide practice':'Using Official Guide / official Quant questions for Quant practice.',
+'Q: Quant fundamentals rebuild':'Rebuilding math basics, formulas, concepts, or weak Quant topics before harder practice.',
+'Q: Quant pacing & move-ons':'Practicing Quant timing, educated guessing, skipping, or moving on before one problem consumes the section.',
+'Q: Quant targeted drilling':'Focused Quant drilling by topic, difficulty, question bank, or timed sectionals.',
+'V: GMAT Ninja Verbal':'Using GMAT Ninja videos, materials, or tutoring for Verbal.',
+'V: e-GMAT Verbal course':'Using e-GMAT in a Verbal, CR, or RC prep context.',
+'V: Official verbal practice':'Using official Verbal, CR, or RC questions for practice.',
+'V: CR argument framework':'Using a repeatable Critical Reasoning process: argument structure, assumption logic, prethinking, or negation.',
+'V: RC active reading':'Using passage strategy: main idea, structure, tone, inference, or active reading habits.',
+'V: Verbal pacing':'Practicing Verbal timing, finishing the section, guessing, or moving on.',
+'V: Verbal targeted practice':'Focused Verbal drilling through questions, grammar, CR, RC, or official practice.',
+'DI: e-GMAT DI practice':'Using e-GMAT in a Data Insights prep context.',
+'DI: GMAT Club DI sets':'Using GMAT Club for DI questions, tests, sectionals, or sub-sectional practice.',
+'DI: Official DI practice':'Using official DI / Data Insights practice materials.',
+'DI: Data Sufficiency drilling':'Focused work on Data Sufficiency-style DI questions.',
+'DI: MSR/table/graphics drill':'Focused work on Multi-Source Reasoning, Table Analysis, Graphics Interpretation, charts, or two-part DI.',
+'DI: DI timing & triage':'Practicing DI pacing, skipping, guessing, and moving on from time-consuming prompts.',
+'DI: DI targeted practice':'Focused DI drilling by question type, sectionals, or practice sets.',
+'DI: build Q+V first':'Author frames DI improvement as dependent on stronger Quant and Verbal foundations.',
+'General: TTP course':'Author explicitly mentions using Target Test Prep without enough section detail.',
+'General: e-GMAT course':'Author explicitly mentions using e-GMAT without enough section detail.',
+'General: GMAT Club practice':'Using GMAT Club generally for explanations, questions, quizzes, or tests.',
+'General: Official Guide practice':'Using the Official Guide or official questions without a specific section focus.',
+'General: official mocks & review':'Using official mocks or practice exams, often followed by review and adjustment.',
+'General: error log & mistake review':'Logging or reviewing misses to identify patterns and fix recurring errors.',
+'General: section-order testing':'Experimenting with section order or choosing an order based on strengths, fatigue, or confidence.',
+'General: test-day routine & mindset':'Managing nerves, sleep, breaks, warmups, burnout, confidence, stamina, or resets between sections.',
+'General: tutor or coaching':'Using a tutor, coach, private class, or one-on-one support.',
 'GMAT Club':'GMAT Club — this forum’s free question bank, quizzes, and practice tests',
 'GMAT Ninja':'GMAT Ninja — free YouTube Verbal lessons plus paid tutoring',
 'GMATWhiz':'GMATWhiz — an adaptive online course and tutoring service',

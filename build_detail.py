@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""v.12 — per-post detail extractor.
+"""v.13 — per-post detail extractor.
 
 Reads the enriched rows (debriefs.json) plus the full post bodies in the local
 corpus (reddit_corpus.json + corpus_index.json) and produces post_details.json:
@@ -11,8 +11,8 @@ one rich object per post that powers the new in-page **post detail** view —
     "sections":  {"Q":[..], "V":[..], "DI":[..], "General":[..]}  extractive
                  sentences routed to the section they discuss — "capture all
                  things", in the author's words, not a lossy paraphrase,
-    "tactics":   {"Q":[..], "V":[..], "DI":[..]}  the terse strategy tags
-                 already mined in v11 (e.g. "TTP grind"),
+    "tactics":   {"Q":[..], "V":[..], "DI":[..]}  the v13 tactic tags rebuilt
+                 from the author's own post/replies by build_tactics.py,
     "timeline":  [ {date, score, q,v,di, label, kind, est} ... ]  — prep-start
                  marker + one point per attempt; real scores, dates parsed when
                  the author states them else back-calculated from post date,
