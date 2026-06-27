@@ -112,7 +112,9 @@ TEMPLATE = r"""<!DOCTYPE html>
 :root{{--bg:#0b1120;--bg2:#0f172a;--card:#1e293b;--text:#e2e8f0;--accent:#38bdf8;--a2:#a78bfa;
   --a3:#34d399;--amber:#f59e0b;--border:#334155;--muted:#94a3b8;--nav:#0d1424}}
 *{{margin:0;padding:0;box-sizing:border-box}}
-body{{font-family:Inter,-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.55}}
+html{{max-width:100%;overflow-x:hidden}}
+body{{font-family:Inter,-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.55;
+  width:100%;max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}}
 a{{color:var(--accent);text-decoration:none}}a:hover{{text-decoration:underline}}
 
 /* ---- top nav ---- */
@@ -153,6 +155,7 @@ canvas{{max-height:300px}}.tall canvas{{max-height:400px}}
 .fbar{{position:sticky;top:54px;z-index:50;background:rgba(15,23,42,.96);backdrop-filter:blur(8px);
   border:1px solid var(--border);border-radius:12px;padding:.7rem .85rem;margin:.2rem 0 1rem;
   box-shadow:0 6px 18px rgba(0,0,0,.28)}}
+.filter-toggle{{display:none}}
 .fbar .frow{{display:flex;flex-wrap:wrap;gap:.7rem .9rem;align-items:end}}
 .fld{{display:flex;flex-direction:column;gap:.22rem}}
 .fld>span{{color:var(--muted);font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}}
@@ -168,13 +171,14 @@ canvas{{max-height:300px}}.tall canvas{{max-height:400px}}
   padding:.36rem .7rem;font-weight:700;font-size:.76rem;cursor:pointer}}
 .reset:hover{{color:var(--text);border-color:var(--muted)}}
 .hits{{font-size:.74rem;color:var(--accent);font-weight:700;white-space:nowrap}}
+.scorectl{{display:flex;align-items:center;gap:.6rem}}
 
 /* dual-handle score slider */
 .range{{position:relative;width:188px;height:30px;display:flex;align-items:center}}
 .range .track{{position:absolute;left:0;right:0;height:5px;border-radius:4px;background:#0b1120;border:1px solid var(--border)}}
 .range .fill{{position:absolute;height:5px;border-radius:4px;background:var(--accent)}}
 .range input[type=range]{{position:absolute;left:0;width:100%;margin:0;height:30px;background:transparent;
-  -webkit-appearance:none;appearance:none;pointer-events:none}}
+  -webkit-appearance:none;appearance:none;pointer-events:none;touch-action:none}}
 .range input[type=range]::-webkit-slider-thumb{{-webkit-appearance:none;pointer-events:auto;width:15px;height:15px;
   border-radius:50%;background:var(--accent);border:2px solid #08111f;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.5)}}
 .range input[type=range]::-moz-range-thumb{{pointer-events:auto;width:15px;height:15px;border-radius:50%;
@@ -215,6 +219,50 @@ th:hover{{color:var(--text)}}
 @media(max-width:600px){{.gr{{grid-template-columns:1fr}}}}
 /* on phones the decorative test pills don't fit alongside the brand + nav links */
 @media(max-width:720px){{.tests{{display:none}}.nav{{gap:.7rem;padding:.6rem .9rem}}.brand{{font-size:1rem}}}}
+@media(max-width:760px){{
+  .ctn{{width:100%;max-width:100%;overflow-x:clip;padding:.85rem .75rem 2.5rem}}
+  .nav{{min-height:50px;gap:.55rem;padding:.55rem .75rem}}
+  .brand{{font-size:1rem;min-width:0}}.brand .mk{{width:24px;height:24px}}
+  .navlink{{font-size:.78rem;padding:.28rem .05rem}}
+  .hero{{padding:.15rem 0 .65rem}}.hero h1{{font-size:1.22rem;line-height:1.2}}
+  .hero p{{font-size:.82rem;line-height:1.45}}
+  .nt{{font-size:.72rem;line-height:1.42;padding:.55rem .65rem;margin-bottom:.75rem}}
+  .fbar{{top:49px;margin:.1rem -.1rem .8rem;border-radius:10px;padding:.45rem;
+    max-height:calc(100dvh - 58px);overflow-y:auto;overscroll-behavior:contain}}
+  .filter-toggle{{display:flex;width:100%;align-items:center;gap:.75rem;justify-content:space-between;
+    background:#0b1120;color:var(--text);border:1px solid var(--border);border-radius:8px;
+    padding:.48rem .6rem;text-align:left;cursor:pointer}}
+  .filter-toggle span{{display:flex;flex-direction:column;min-width:0;line-height:1.15}}
+  .filter-toggle b{{font-size:.82rem}}.filter-toggle small{{margin-top:.12rem;color:var(--muted);
+    font-size:.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+  .filter-toggle strong{{margin-left:auto;color:var(--accent);font-size:.76rem;white-space:nowrap}}
+  .filter-toggle i{{width:.55rem;height:.55rem;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);
+    transform:rotate(45deg);transition:transform .12s;flex:0 0 auto}}
+  .fbar.open .filter-toggle i{{transform:rotate(225deg);margin-top:.25rem}}
+  .fbar .frow{{display:none;padding:.65rem .05rem .05rem;gap:.55rem;align-items:stretch}}
+  .fbar.open .frow{{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+  .fld{{min-width:0}}.ftype,.fscore{{grid-column:1/-1}}
+  .freset,.fhits{{grid-column:span 1}}
+  .seg{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}}
+  .seg button{{min-height:38px;padding:.4rem .2rem;font-size:.72rem;white-space:nowrap}}
+  .fbar select,.fbar input[type=date]{{width:100%;min-width:0;min-height:38px;font-size:.82rem}}
+  .scorectl{{width:100%;gap:.55rem}}
+  .range{{width:auto;min-width:0;flex:1;height:44px}}
+  .range input[type=range]{{height:44px}}
+  .range input[type=range]::-webkit-slider-thumb{{width:24px;height:24px}}
+  .range input[type=range]::-moz-range-thumb{{width:24px;height:24px}}
+  .rdout{{font-size:.84rem;min-width:76px;text-align:right}}
+  .reset{{width:100%;min-height:38px}}.fhits{{align-self:center;justify-content:center}}
+  .sts{{grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin:.75rem 0}}
+  .st{{padding:.58rem .4rem;border-radius:8px}}.st .n{{font-size:1.18rem}}.st .l{{font-size:.66rem}}
+  .gr{{grid-template-columns:minmax(0,1fr);gap:.75rem;margin-bottom:.75rem}}
+  .cd{{min-width:0;overflow:hidden;border-radius:10px;padding:.8rem .75rem}}
+  .cd h2{{font-size:.9rem}}.cd .sub{{font-size:.68rem;line-height:1.35}}
+  canvas{{max-width:100%}}
+  .ov{{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}}
+  .ov table{{min-width:760px}}.hm{{min-width:620px}}
+  .legend{{overflow-x:auto;white-space:nowrap;padding-bottom:.15rem}}
+}}
 
 /* ---- in-tab drill overlay (replaces the v10 new-tab popup) ---- */
 #drill{{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;display:none}}
@@ -276,16 +324,21 @@ th:hover{{color:var(--text)}}
   <b>directional, not proof</b>. Tactics need &ge;4 users to appear.</div>
 
   <!-- sticky filter toolbar -->
-  <div class="fbar"><div class="frow">
-    <div class="fld"><span>Post type</span>
+  <div class="fbar" id="filterBar">
+    <button class="filter-toggle" id="filterToggle" type="button" onclick="toggleFilters()" aria-expanded="false">
+      <span><b>Filters</b><small id="filterSummary">Debriefs | {sdef_min}-{sdef_max}</small></span>
+      <strong id="filterCount"></strong><i aria-hidden="true"></i>
+    </button>
+  <div class="frow">
+    <div class="fld ftype"><span>Post type</span>
       <div class="seg" id="segType">
         <button data-v="Debrief" class="on">Debriefs</button>
         <button data-v="Asking Question">Questions</button>
         <button data-v="Other">Other</button>
       </div>
     </div>
-    <div class="fld"><span>Score range</span>
-      <div style="display:flex;align-items:center;gap:.6rem">
+    <div class="fld fscore"><span>Score range</span>
+      <div class="scorectl">
         <div class="range">
           <div class="track"></div><div class="fill" id="sFill"></div>
           <input type="range" id="sLo" min="{sdef_min}" max="{smax}" step="{sstep}" value="{sdef_min}">
@@ -301,8 +354,8 @@ th:hover{{color:var(--text)}}
     <div class="fld"><span>Attempts</span><select id="fAtt"><option value="">Any</option><option value="1">1st try</option><option value="2">2 tries</option><option value="3+">3+ tries</option></select></div>
     <div class="fld"><span>Promo</span><select id="fSpon"><option value="">Show all</option><option value="hide">Hide promo</option><option value="any">Promo only</option></select></div>
     <div class="fld"><span>Self Study</span><select id="fSelf"><option value="">Any</option><option value="yes">Self study only</option><option value="no">Paid prep only</option></select></div>
-    <div class="fld"><span>&nbsp;</span><button class="reset" onclick="resetAll()">Reset</button></div>
-    <div class="fld"><span>&nbsp;</span><span class="hits" id="hits"></span></div>
+    <div class="fld freset"><span>&nbsp;</span><button class="reset" onclick="resetAll()">Reset</button></div>
+    <div class="fld fhits"><span>&nbsp;</span><span class="hits" id="hits"></span></div>
   </div></div>
 
   <div id="statsRow" class="sts"></div>
@@ -433,6 +486,24 @@ let TYPE='Debrief';
 const segType=document.getElementById('segType');
 segType.addEventListener('click',e=>{{const b=e.target.closest('button');if(!b)return;
   [...segType.children].forEach(x=>x.classList.toggle('on',x===b));TYPE=b.dataset.v;updateSliderDomain();applyAll();}});
+const filterBar=document.getElementById('filterBar'),
+      filterToggle=document.getElementById('filterToggle'),
+      filterSummary=document.getElementById('filterSummary'),
+      filterCount=document.getElementById('filterCount');
+function toggleFilters(){{
+  const open=filterBar.classList.toggle('open');
+  filterToggle.setAttribute('aria-expanded',open?'true':'false');
+}}
+function filterTypeLabel(){{
+  if(TYPE==='Debrief')return'Debriefs';
+  if(TYPE==='Asking Question')return'Questions';
+  return'Other';
+}}
+function updateFilterChrome(count){{
+  let lo=+sLo.value,hi=+sHi.value;if(lo>hi){{const t=lo;lo=hi;hi=t;}}
+  if(filterSummary)filterSummary.textContent=filterTypeLabel()+' | '+lo+'-'+hi;
+  if(filterCount)filterCount.textContent=count+' match'+(count===1?'':'es');
+}}
 
 /* dual-handle score slider — domain adapts to the active post type */
 const sLo=document.getElementById('sLo'),sHi=document.getElementById('sHi'),
@@ -457,6 +528,7 @@ function syncSlider(){{
   const a=(lo-SMIN)/(SMAX-SMIN)*100,b=(hi-SMIN)/(SMAX-SMIN)*100;
   sFill.style.left=a+'%';sFill.style.width=(b-a)+'%';
   sOut.textContent=lo+'–'+hi;
+  updateFilterChrome(gf().length);
   return [lo,hi];
 }}
 [sLo,sHi].forEach(s=>s.addEventListener('input',()=>{{syncSlider();applyAll();}}));
@@ -716,7 +788,9 @@ function hmClick(strat,lo,hi){{
 
 function applyAll(){{
   const f=gf();
-  document.getElementById('hits').textContent=f.length+' match'+(f.length===1?'':'es');
+  const matchText=f.length+' match'+(f.length===1?'':'es');
+  document.getElementById('hits').textContent=matchText;
+  updateFilterChrome(f.length);
   try{{rTb(f)}}catch(e){{console.error('table',e)}}
   try{{rSt(f)}}catch(e){{console.error('stats',e)}}
   try{{rCh(f)}}catch(e){{console.error('charts',e)}}
