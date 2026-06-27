@@ -1,0 +1,162 @@
+{
+  "gc453342": {
+    "Q": [
+      "Stopped treating Quant as a coverage problem and focused on the specific processes causing misses.",
+      "Used error logs to identify where in the solving process mistakes occurred.",
+      "Targeted detractors rather than trying to fix everything at once.",
+      "Created custom quizzes for weak areas visible in skill data, especially word-problem translation and algebra.",
+      "Used official-question filters by section and subtopic for targeted practice."
+    ],
+    "V": [
+      "Built RC stamina by reading Aeon and Wall Street Journal like GMAT passages, tracking tone shifts, main point, and likely direction.",
+      "Used difficult Verbal sectionals so official Verbal felt easier on test day.",
+      "Focused on Reading Comprehension as the needed edge after CR was already strong.",
+      "Placed Verbal first because it was the most mentally taxing and timing-sensitive section."
+    ],
+    "DI": [
+      "Accepted DI as the least predictable section and left it for last to avoid overthinking it earlier.",
+      "Stayed engaged on the final DI questions instead of mentally checking out as in the first attempt.",
+      "Recognized that even two correct answers among the final five DI questions could meaningfully affect the section score."
+    ],
+    "overall": [
+      "Moved from a 645 first attempt to 715 by shifting from quantity of questions to strategic diagnosis.",
+      "After each mock, rested and then re-solved every wrong question fresh before analyzing the cause.",
+      "Treated careless errors as recurring patterns to manage rather than as throwaway misses.",
+      "Kept a consistent section order of Verbal, Quant, then DI for at least several mocks before test day.",
+      "Stayed in the moment on test day and avoided judging performance mid-test."
+    ]
+  },
+  "gc441979": {
+    "Q": [
+      "Used GMAT Club question banks and timed practice to develop pacing for a strong Quant section.",
+      "Solved topic-wise questions without a time limit first, increasing difficulty over several weeks.",
+      "Moved to section-wise timed practice with a cap of about three minutes per question.",
+      "Used adaptive sectionals to replicate the actual exam rhythm."
+    ],
+    "V": [
+      "After a weak classic GMAT Verbal score, rebuilt Verbal fundamentals for the Focus Edition.",
+      "Studied theoretical Verbal concepts from Manhattan Prep and official materials.",
+      "Used GMAT Club explanations to understand the reasoning patterns behind correct answers and traps.",
+      "Reviewed why all four wrong answer choices were wrong, not only why the credited answer was right."
+    ],
+    "DI": [],
+    "overall": [
+      "Switched from a one-month official-guide-only first attempt to a four-month disciplined self-study cycle.",
+      "Used GMAT Club because it allowed flexible practice during work breaks and deeper weekend sessions.",
+      "Took topic tests every three days, weekly Sunday mocks, and official mocks along the way.",
+      "Dedicated an hour daily to error-log review.",
+      "Used the first two mocks to understand the section-adaptive scoring pattern before calibrating prep."
+    ]
+  },
+  "gc446080": {
+    "Q": [
+      "Recognized Quant as dependable but still practiced timing because the official section could feel harder than mocks.",
+      "Used GMAT Club mocks and forum quizzes to build speed and familiarity with the format.",
+      "Powered through a harder-than-expected Quant section and moved on without letting it ruin the rest of the test."
+    ],
+    "V": [
+      "Used GMAT Ninja videos for RC and CR after random, unstructured study caused mock scores to drop.",
+      "Fixed a habit of rushing through Verbal and making mistakes during mocks.",
+      "Used LLMs to analyze Verbal mistakes and identify flaws in the logic chain.",
+      "Found understanding the question and eliminating wrong choices more useful than over-bucketing CR question patterns."
+    ],
+    "DI": [
+      "Worked on timing more than content because DI concepts were not the main issue.",
+      "Used a 35, 25, 15, and 10-minute checkpoint pattern to keep enough time for review.",
+      "Found official DI mocks representative of the real section.",
+      "Placed DI after Quant and before the break in the final order."
+    ],
+    "overall": [
+      "Recovered from random topic study and half-hearted weekly mocks by adding structure.",
+      "Studied before work rather than at night because morning study improved retention while working full time.",
+      "Used one mock per week to build stamina for the full exam and expose fatigue-related errors.",
+      "Prioritized recovery over revision in the final three days after getting sick.",
+      "Reduced test-day variables with planning, buffers, and small logistics such as marker handling."
+    ]
+  },
+  "gc448370": {
+    "Q": [
+      "Moved away from formula memorization and toward logical thinking for Quant.",
+      "Treated behavioral errors, such as misreads and marking the wrong answer, as the main Quant enemy.",
+      "Used a 2.5-3 minute biological clock to decide whether a question was still worth pursuing.",
+      "Bookmarked calculation-heavy questions on test day and returned later rather than losing composure.",
+      "Used hard practice questions to prepare for difficult official Quant."
+    ],
+    "V": [
+      "Improved CR through pre-thinking instead of reading answer choices and hoping one clicked.",
+      "Used mentor questioning to uncover hidden weaknesses such as boldface CR.",
+      "Used a structured approach to raise hard CR accuracy and reduce timing.",
+      "For RC, stopped writing everything down and built mental maps of each passage.",
+      "Used conscious reading to understand paragraph purpose and navigate back only when specific questions required it."
+    ],
+    "DI": [
+      "Acknowledged that DI underperformed because it did not receive enough dedicated prep.",
+      "Recognized DI as unpredictable and as a blend of Quant and Verbal skills.",
+      "Identified overconfidence from a prior DI81 as a mistake."
+    ],
+    "overall": [
+      "Improved from 635 to 695 in about 45 days while working full time.",
+      "Shifted from cheap, scattered resources to structured prep after realizing official-guide accuracy had not translated to test execution.",
+      "Used in-depth post-question analysis to understand why wrong answers were chosen and correct answers were eliminated.",
+      "Used mocks to refine strategy rather than as guarantees of official score.",
+      "Focused on process over mock-score swings and tested that abandoning strategy led to worse mock results."
+    ]
+  },
+  "gc448777": {
+    "Q": [
+      "Distinguished minor knowledge gaps from larger behavioral issues in Quant.",
+      "Reviewed all Quant modules despite a CAT background to find hidden gaps.",
+      "Used targeted practice on one topic at a time before testing under pressure.",
+      "Analyzed mocks for rushing, misreading, and lost time even when sectional scores were high.",
+      "Kept test-day reminders based on mock analysis, especially to read each question completely before solving."
+    ],
+    "V": [
+      "Stopped treating difficult Verbal misses as isolated and started using error logs to find repeatable process issues.",
+      "Used CR pre-thinking for about 30 seconds before answer choices to reduce confusion between similar options.",
+      "For RC, wrote paragraph summaries and an overall summary, then condensed them to short gist notes.",
+      "Spent slightly more time upfront on RC comprehension to save time on questions.",
+      "Used specific strategy work for boldface and assumption questions after discovering gaps."
+    ],
+    "DI": [
+      "Improved DI by adopting structured processes for each question type, especially Data Sufficiency.",
+      "Stopped rushing to combine DS statements without a systematic approach.",
+      "Accepted that a process taking slightly longer could still improve accuracy dramatically.",
+      "Used a one-minute gist check plus a hard move-on window for DI time management.",
+      "For MSR, wrote important points on the notepad to navigate sources faster later."
+    ],
+    "overall": [
+      "Improved from 585 to 685 by building process, discipline, and mental resilience rather than only adding knowledge.",
+      "Used question-level time limits and difficulty filters for targeted practice.",
+      "After mocks, took a break and then spent hours analyzing what went wrong.",
+      "Categorized mistakes by behavioral issues, rushing, and section-specific process gaps.",
+      "Used four or five mock-derived reminders on test day to avoid repeating known errors."
+    ]
+  },
+  "gc445397": {
+    "Q": [
+      "After a 665 first attempt, drilled specific Quant weak spots such as simple interest.",
+      "Used weekly sectionals to maintain Quant strength and identify fresh weaknesses.",
+      "Tracked silly mistakes such as missing key words, answering the wrong question, or falling for traps.",
+      "Reduced average Quant timing to about 1.5-2 minutes to create a buffer for harder questions.",
+      "Used the buffer to spend extra time on a difficult official Quant question without losing the section."
+    ],
+    "V": [
+      "Fixed first-attempt Verbal anxiety by slowing down RC instead of rushing to finish.",
+      "Learned to balance thorough understanding and speed in RC, finishing the retake with review time.",
+      "For CR, paused after reading the question to predict what the answer should look like.",
+      "Used an error log for boldface and inference questions, then returned to modules and custom quizzes for those types."
+    ],
+    "DI": [
+      "Treated MSR as the biggest DI challenge because it consumed too much time.",
+      "Used structured video lessons to develop an approach for MSR.",
+      "Recognized DI as applying existing Quant and Verbal skills to data sources."
+    ],
+    "overall": [
+      "Moved from 665 to 715 in 20 days by targeting weak spots and calming test-day anxiety.",
+      "Changed section order after practice, choosing Quant, DI, then Verbal for confidence and momentum.",
+      "Used mentor check-ins and practice scores to rebuild confidence after a disappointing first attempt.",
+      "Kept a religious error log to avoid repeating the same mistakes.",
+      "Followed theory, targeted practice, and sectional quizzes rather than shortcuts."
+    ]
+  }
+}
