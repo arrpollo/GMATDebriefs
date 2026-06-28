@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""v.13 — GMATDebriefs.
+"""v.14 — GMATDebriefs.
 
 Presentation only. Reads debriefs.json (enriched by enrich.py) + post_details.json
 (per-post detail model built by build_detail.py) and writes a self-contained
-dashboard_v13.html.
+dashboard_v14.html.
+
+What changed vs v13: one H2 2024 r/GMAT debrief was added as a successful
+single-case import test. The tactic/detail/dashboard builders remain the v13
+pipeline so the new row is classified and summarized consistently.
 
 What changed vs v12: tactic labels are rebuilt from the author's own post/replies
 instead of carried over from the older v11 strategy labels. Vendor tactics now
@@ -102,8 +106,8 @@ def main():
         # can use normal single braces (no doubling needed).
         detail_css=DETAIL_CSS, detail_js=DETAIL_JS, details_js=details_js,
     )
-    (BASE / "dashboard_v13.html").write_text(html)
-    print(f"dashboard_v13.html written. {len(debriefs)} posts, {n_deb} debriefs, "
+    (BASE / "dashboard_v14.html").write_text(html)
+    print(f"dashboard_v14.html written. {len(debriefs)} posts, {n_deb} debriefs, "
           f"{len(details)} detail pages.")
 
 

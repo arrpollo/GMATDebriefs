@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""v.13 tactic reclassifier.
+"""v.14 tactic reclassifier.
 
 Rebuilds ``strategy_items`` from the post text itself instead of trusting the
 older v11 labels.  The important guardrail: vendor tactics are only assigned
@@ -215,7 +215,7 @@ def main():
         "new_ttp_quant_course_count": new_ttp,
         "tactic_counts_debriefs": dict(counts.most_common()),
     }
-    (BASE / "tactic_audit_v13.json").write_text(json.dumps(report, ensure_ascii=False, indent=2))
+    (BASE / "tactic_audit_v14.json").write_text(json.dumps(report, ensure_ascii=False, indent=2))
     print(f"Updated strategy_items for {len(rows)} posts.")
     print(f"TTP: old Q: TTP grind={old_ttp}, new Q: TTP Quant course={new_ttp}")
     print("Top debrief tactics:")
