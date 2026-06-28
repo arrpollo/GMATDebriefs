@@ -287,17 +287,104 @@ def route_sections(sentences):
     return sec
 
 
-def lead_overview(sentences, row):
-    """A short, human lead: the first 1-2 substantive sentences of the post."""
-    for s in sentences:
-        if SKIP_RE.search(s):
-            continue
-        if len(s) >= 40 and not SCORE_RE.fullmatch(s.strip()):
-            first = s
+def _score_phrase(row):
+    score = row.get("total_score")
+    start = row.get("start_score")
+    gain = row.get("point_gain")
+    if score and start and gain and gain > 0:
+        return f"A climb from {start} to {score}"
+    if score:
+        return f"A {score} debrief"
+    return "A GMAT debrief"
+
+
+def _duration_phrase(row):
+    weeks = row.get("prep_weeks")
+    if not weeks:
+        return ""
+    try:
+        weeks = float(weeks)
+    except (TypeError, ValueError):
+        return ""
+    if weeks < 1:
+        return "after a short final push"
+    if weeks.is_integer():
+        weeks = int(weeks)
+    return f"after {weeks} weeks of prep"
+
+
+def _split_phrase(row):
+    parts = []
+    for label, key in (("Q", "q_score"), ("V", "v_score"), ("DI", "di_score")):
+        if row.get(key):
+            parts.append(f"{label}{row[key]}")
+    return f"with {' / '.join(parts)}" if len(parts) >= 2 else ""
+
+
+def _attempt_phrase(row):
+    attempts = row.get("attempts")
+    if not attempts:
+        return ""
+    try:
+        attempts = int(attempts)
+    except (TypeError, ValueError):
+        return ""
+    if attempts == 1:
+        return "on a first attempt"
+    return f"across {attempts} attempts"
+
+
+def _focus_phrase(row, sections):
+    labels = []
+    for item in row.get("strategy_items", []):
+        if ":" in item:
+            labels.append(item.split(":", 1)[1].strip())
+    for k in ("General", "Q", "V", "DI"):
+        for s in sections.get(k, []) if sections else []:
+            labels.append(s.rstrip("."))
+    clean, seen = [], set()
+    for label in labels:
+        label = re.sub(r"^(the author|test-taker)\s+", "", label, flags=re.I).strip()
+        label = re.sub(r"\s+", " ", label)
+        key = label.lower()[:48]
+        if len(label) >= 8 and key not in seen:
+            seen.add(key)
+            clean.append(label)
+        if len(clean) >= 2:
             break
-    else:
-        first = sentences[0] if sentences else ""
-    return first[:320]
+    if clean:
+        return "Emphasizes " + " and ".join(clean) + "."
+    resources = row.get("resources", [])[:2]
+    if resources:
+        return "Uses " + " and ".join(resources) + " as named prep resources."
+    return ""
+
+
+def lead_overview(sentences, row, sections=None):
+    """A compact third-person summary for the card/detail lead."""
+    bits = [_score_phrase(row)]
+    for piece in (_duration_phrase(row), _attempt_phrase(row), _split_phrase(row)):
+        if piece:
+            bits.append(piece)
+    lead = " ".join(bits).strip() + "."
+    focus = _focus_phrase(row, sections or {})
+    if focus:
+        lead += " " + focus
+
+    # If metadata is too thin, fall back to a cleaned extractive sentence, but
+    # keep it out of first person so newly imported Reddit rows match the older
+    # written-summary voice.
+    if len(lead) < 35:
+        for s in sentences:
+            if SKIP_RE.search(s):
+                continue
+            if len(s) >= 40 and not SCORE_RE.fullmatch(s.strip()):
+                lead = condense(s)
+                break
+    lead = re.sub(r"\bI\b", "the author", lead)
+    lead = re.sub(r"\bmy\b", "the author's", lead, flags=re.I)
+    lead = re.sub(r"\bme\b", "the author", lead, flags=re.I)
+    return lead[:320]
 
 
 # ----------------------------------------------------------- score history --
@@ -518,14 +605,18 @@ def main():
         cur = summaries.get(pid)
         if cur:
             curated_n += 1
-            # curated summary overrides the extractive Q/V/DI and supplies a
-            # written "overall"; the extractive General is dropped for these.
-            sections = {
-                "Q": cur.get("Q", []),
-                "V": cur.get("V", []),
-                "DI": cur.get("DI", []),
-                "General": [],
-            }
+            # Curated summaries may provide only the written "overall" block.
+            # In that case keep the generated section notes instead of blanking
+            # Q/V/DI; older fully curated entries can still override sections.
+            if any(cur.get(k) for k in ("Q", "V", "DI")):
+                sections = {
+                    "Q": cur.get("Q", sections.get("Q", [])),
+                    "V": cur.get("V", sections.get("V", [])),
+                    "DI": cur.get("DI", sections.get("DI", [])),
+                    "General": [],
+                }
+            else:
+                sections["General"] = []
             overall = cur.get("overall", "")
         tac = {"Q": [], "V": [], "DI": []}
         for s in row.get("strategy_items", []):
@@ -540,7 +631,7 @@ def main():
 
         details[pid] = {
             "body": display_body,
-            "overview": lead_overview(sents, row),
+            "overview": lead_overview(sents, row, sections),
             "sections": sections,
             "overall": overall,
             "tactics": tac,

@@ -185,13 +185,14 @@
       "title": "From 640 to 680 to 730 - My GMAT Journey ",
       "url": "https://www.reddit.com/r/GMAT/comments/1e2mbux/from_640_to_680_to_730_my_gmat_journey/",
       "date": "2024-07-13",
-      "status": "added",
+      "status": "removed-old-gmat-score",
       "score": 680,
       "q": 76,
       "v": 90,
       "di": 77,
       "n_replies": 20,
-      "total_rows": 278
+      "total_rows": 278,
+      "reason": "Removed from v14 because final total score ends in 0 (old GMAT scale / non-Focus score)."
     },
     {
       "id": "1e3o8vf",
@@ -929,13 +930,14 @@
       "title": "Finally scored above 700+! Got 675 on GMAT FE!",
       "url": "https://www.reddit.com/r/GMAT/comments/1f011i9/finally_scored_above_700_got_675_on_gmat_fe/",
       "date": "2024-08-24",
-      "status": "added",
+      "status": "removed-old-gmat-score",
       "score": 700,
       "q": null,
       "v": null,
       "di": null,
       "n_replies": 8,
-      "total_rows": 292
+      "total_rows": 292,
+      "reason": "Removed from v14 because final total score ends in 0 (old GMAT scale / non-Focus score)."
     },
     {
       "id": "1f01zkd",
@@ -1151,13 +1153,14 @@
       "title": "My journey from 550 (Mock) to 690 (OG) to 655 (FE)",
       "url": "https://www.reddit.com/r/GMAT/comments/1f7dg5y/my_journey_from_550_mock_to_690_og_to_655_fe/",
       "date": "2024-09-02",
-      "status": "added",
+      "status": "removed-old-gmat-score",
       "score": 690,
       "q": null,
       "v": null,
       "di": null,
       "n_replies": 12,
-      "total_rows": 298
+      "total_rows": 298,
+      "reason": "Removed from v14 because final total score ends in 0 (old GMAT scale / non-Focus score)."
     },
     {
       "id": "1f8p2nv",
@@ -1322,13 +1325,14 @@
       "title": "My GMAT Journey from 620 to 730. ",
       "url": "https://www.reddit.com/r/GMAT/comments/1fi3ee6/my_gmat_journey_from_620_to_730/",
       "date": "2024-09-16",
-      "status": "added",
+      "status": "removed-old-gmat-score",
       "score": 730,
       "q": 83,
       "v": 84,
       "di": 86,
       "n_replies": 67,
-      "total_rows": 302
+      "total_rows": 302,
+      "reason": "Removed from v14 because final total score ends in 0 (old GMAT scale / non-Focus score)."
     },
     {
       "id": "1fisj4f",
@@ -3297,13 +3301,14 @@
       "title": "my GMAT journey + Quant tips for retake next month?",
       "url": "https://www.reddit.com/r/GMAT/comments/1icx8h1/my_gmat_journey_quant_tips_for_retake_next_month/",
       "date": "2025-01-29",
-      "status": "added",
+      "status": "removed-old-gmat-score",
       "score": 730,
       "q": null,
       "v": null,
       "di": null,
       "n_replies": 4,
-      "total_rows": 364
+      "total_rows": 364,
+      "reason": "Removed from v14 because final total score ends in 0 (old GMAT scale / non-Focus score)."
     },
     {
       "id": "1idh55s",
