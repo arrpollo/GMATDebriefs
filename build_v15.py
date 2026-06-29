@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""v.14 — GMATDebriefs.
+"""v.15 — GMATDebriefs.
 
 Presentation only. Reads debriefs.json (enriched by enrich.py) + post_details.json
 (per-post detail model built by build_detail.py) and writes a self-contained
-dashboard_v14.html.
+dashboard_v15.html.
+
+What changed vs v14: the public dashboard is debrief-only. Asking-question and
+other score-mention posts are excluded from the embedded dashboard payload, the
+post-type filter is removed, and a new section-insights experience lets readers
+open Quant / Verbal / Data Insights analysis pages from the main dashboard.
 
 What changed vs v13: one H2 2024 r/GMAT debrief was added as a successful
 single-case import test. The tactic/detail/dashboard builders remain the v13
@@ -21,10 +26,10 @@ back-calculated prep-start), an extractive **Q / V / DI strategy** write-up in t
 author's own words, the full debrief text, and a clear **"open the original"** link.
 Run build_detail.py before this script.
 
---- carried over from v11 (vs v10) ---
+--- carried over from v11 (vs v10), then simplified in v15 ---
   1. Vocabulary: "Success Story" -> "Debrief" everywhere (the community's word).
-  2. Filter: the meaningless "All" post-type option is gone; you always view one of
-     Debrief / Asking Question / Other (defaults to Debrief).
+  2. Filter: v15 removes post-type switching entirely; only achieved-score debriefs
+     are embedded in the dashboard.
   3. Brand: a real header — GMATDebriefs logo + a top nav with a GMAT tab (the active
      test) and an About tab. The TESTS array makes adding GRE/etc. a one-line change.
   4. Drill-down: clicking a chart no longer spawns a new tab. It opens an in-page
@@ -54,18 +59,21 @@ def main():
     # Defensive: if an un-enriched file is built, still show the new vocabulary.
     for d in debriefs:
         d["tags"] = ["Debrief" if t == "Success Story" else t for t in d.get("tags", [])]
+    debriefs = [d for d in debriefs if "Debrief" in d.get("tags", [])]
+    details = {pid: det for pid, det in details.items() if any(d["post_id"] == pid for d in debriefs)}
 
     all_resources = sorted(set(r for d in debriefs for r in d["resources"]))
     all_sources = sorted(set(d["source"] for d in debriefs))
     dates = [d["date"] for d in debriefs if d.get("date")]
     min_date, max_date = (min(dates), max(dates)) if dates else ("2025-01-01", "2026-12-31")
-    n_deb = sum(1 for d in debriefs if "Debrief" in d["tags"])
+    n_deb = len(debriefs)
 
     js_data = json.dumps([{
         "id": d["post_id"],
         "date": d["date"], "title": d["title"], "total": d["total_score"],
         "q": d["q_score"], "v": d["v_score"], "di": d["di_score"],
-        "resources": d["resources"], "strat": d["strategy_items"], "tags": d["tags"],
+        "resources": d["resources"], "strat": d["strategy_items"],
+        "tags": [t for t in d["tags"] if t != "Debrief"],
         "source": d["source"],
         "permalink": d["permalink"].replace("old.reddit.com", "www.reddit.com"),
         "attempts": d["attempts"], "prep_weeks": d["prep_weeks"],
@@ -74,9 +82,6 @@ def main():
     } for d in debriefs], ensure_ascii=False)
 
     tt_js = json.dumps({
-        "Debrief": "Author reports achieving this score and shares their prep experience or strategy.",
-        "Asking Question": "Author mentions a target score and is asking for advice \\u2014 has not achieved it yet.",
-        "Other": "Mentions a 650+ score but doesn\\u0027t clearly fit a debrief or a question.",
         "Maybe Promo": "Possible promotional signals (brand-endorsement framing, vendor rep in comments, or readers questioning if it\\u0027s an ad) \\u2014 open it and judge.",
         "Self Study": "Used only free resources (GMAT Club, GMAT Ninja, Official Guide, Official Mocks) or no named resource at all \\u2014 no paid prep course.",
     })
@@ -87,7 +92,7 @@ def main():
     # Debriefs is the default view.
     floor5 = lambda x: ((x - 5) // 10) * 10 + 5
     all_scores = [d["total_score"] for d in debriefs if d.get("total_score")]
-    deb_scores = [d["total_score"] for d in debriefs if d.get("total_score") and "Debrief" in d["tags"]]
+    deb_scores = [d["total_score"] for d in debriefs if d.get("total_score")]
     SDOMAIN_MIN = floor5(min(all_scores)) if all_scores else 205
     SDOMAIN_MAX, SSTEP = 805, 10
     SDEF_MIN = floor5(min(deb_scores)) if deb_scores else SDOMAIN_MIN
@@ -106,8 +111,8 @@ def main():
         # can use normal single braces (no doubling needed).
         detail_css=DETAIL_CSS, detail_js=DETAIL_JS, details_js=details_js,
     )
-    (BASE / "dashboard_v14.html").write_text(html)
-    print(f"dashboard_v14.html written. {len(debriefs)} posts, {n_deb} debriefs, "
+    (BASE / "dashboard_v15.html").write_text(html)
+    print(f"dashboard_v15.html written. {len(debriefs)} debriefs, "
           f"{len(details)} detail pages.")
 
 
@@ -115,7 +120,7 @@ def main():
 # HTML out. {{ }} are literal braces; {name} are Python format fields.
 TEMPLATE = r"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>GMATDebriefs — what actually works</title>
+<title>GMATDebriefs v.15 — section insights</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{{--bg:#0b1120;--bg2:#0f172a;--card:#1e293b;--text:#e2e8f0;--accent:#38bdf8;--a2:#a78bfa;
@@ -224,7 +229,21 @@ th:hover{{color:var(--text)}}
 .seclbl{{font-size:.78rem;font-weight:700;margin:.2rem 0 .1rem;text-align:center}}
 .trio{{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem}}
 .trio canvas{{max-height:240px}}
+.section-grid{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.85rem;margin:0 0 1rem}}
+.section-card{{background:var(--card);border:1px solid var(--border);border-top:3px solid var(--sec,#38bdf8);
+  border-radius:10px;padding:.95rem 1rem;text-align:left;cursor:pointer;transition:border-color .15s,transform .15s}}
+.section-card:hover{{border-color:var(--sec,#38bdf8);transform:translateY(-1px)}}
+.section-card h2{{font-size:.98rem;color:var(--sec,#38bdf8);margin-bottom:.25rem}}
+.section-card p{{font-size:.74rem;color:var(--muted);line-height:1.45;margin-bottom:.65rem}}
+.section-metrics{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem;margin-bottom:.65rem}}
+.section-metric{{background:#0b1120;border:1px solid var(--border);border-radius:8px;padding:.45rem .35rem;text-align:center}}
+.section-metric b{{display:block;color:var(--text);font-size:.98rem;line-height:1.1}}
+.section-metric span{{display:block;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.03em;margin-top:.15rem}}
+.mini-tags{{display:flex;flex-wrap:wrap;gap:.28rem}}
+.mini-tag{{font-size:.62rem;font-weight:700;color:var(--text);background:#0b1120;border:1px solid var(--sec,#38bdf8);
+  border-radius:999px;padding:.1rem .45rem}}
 @media(max-width:680px){{.trio{{grid-template-columns:1fr}}}}
+@media(max-width:860px){{.section-grid{{grid-template-columns:1fr}}}}
 @media(max-width:600px){{.gr{{grid-template-columns:1fr}}}}
 /* on phones the decorative test pills don't fit alongside the brand + nav links */
 @media(max-width:720px){{.tests{{display:none}}.nav{{gap:.7rem;padding:.6rem .9rem}}.brand{{font-size:1rem}}}}
@@ -264,6 +283,8 @@ th:hover{{color:var(--text)}}
   .reset{{width:100%;min-height:38px}}.fhits{{align-self:center;justify-content:center}}
   .sts{{grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin:.75rem 0}}
   .st{{padding:.58rem .4rem;border-radius:8px}}.st .n{{font-size:1.18rem}}.st .l{{font-size:.66rem}}
+  .section-grid{{grid-template-columns:1fr;gap:.65rem;margin-bottom:.75rem}}
+  .section-card{{padding:.8rem .75rem;border-radius:9px;transform:none}}
   .gr{{grid-template-columns:minmax(0,1fr);gap:.75rem;margin-bottom:.75rem}}
   .cd{{min-width:0;overflow:hidden;border-radius:10px;padding:.8rem .75rem}}
   .cd h2{{font-size:.9rem}}.cd .sub{{font-size:.68rem;line-height:1.35}}
@@ -274,7 +295,7 @@ th:hover{{color:var(--text)}}
 }}
 
 /* ---- in-tab drill overlay (replaces the v10 new-tab popup) ---- */
-#drill{{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;display:none}}
+#drill{{position:fixed;inset:0;z-index:280;background:var(--bg);overflow-y:auto;display:none}}
 #drill.on{{display:block}}
 .drlhd{{position:sticky;top:0;background:rgba(13,20,36,.96);backdrop-filter:blur(8px);
   border-bottom:1px solid var(--border);padding:.7rem 1.2rem;display:flex;align-items:center;gap:1rem}}
@@ -298,6 +319,26 @@ th:hover{{color:var(--text)}}
 #tip.on{{opacity:1}}
 #tip .th{{display:block;color:var(--accent);font-weight:700;margin-bottom:.22rem;font-size:.76rem}}
 .hm td[data-tip]{{cursor:pointer}}
+
+/* ---- section insight page ---- */
+#sectionpage{{position:fixed;inset:0;z-index:260;background:var(--bg);overflow-y:auto;display:none}}
+#sectionpage.on{{display:block}}
+.shd{{position:sticky;top:0;z-index:5;background:rgba(13,20,36,.96);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border);padding:.7rem 1.1rem;display:flex;align-items:center;gap:.9rem}}
+.sback{{display:inline-flex;align-items:center;gap:.4rem;background:var(--accent);color:#08111f;border:none;
+  border-radius:8px;padding:.45rem .85rem;font-weight:800;font-size:.82rem;cursor:pointer;white-space:nowrap}}
+.shd-t{{flex:1;min-width:0}}
+.shd-t h2{{font-size:1rem;font-weight:800;line-height:1.25;color:var(--sec,#38bdf8)}}
+.shd-t p{{font-size:.74rem;color:var(--muted);line-height:1.35}}
+.sbody{{max-width:1200px;margin:0 auto;padding:1.1rem 1.2rem 4rem}}
+.snote{{font-size:.8rem;color:var(--muted);background:#16233a;border-left:3px solid var(--sec,#38bdf8);
+  border-radius:0 8px 8px 0;padding:.65rem .8rem;margin-bottom:1rem}}
+.sgrid{{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}}
+.sgrid.full{{grid-template-columns:1fr}}
+.sgrid.three{{grid-template-columns:1fr 1fr 1fr}}
+.smetric-row{{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.55rem;margin-bottom:1rem}}
+@media(max-width:980px){{.sgrid.three{{grid-template-columns:1fr}}}}
+@media(max-width:760px){{.sgrid{{grid-template-columns:1fr}}.sbody{{padding:.9rem .75rem 3rem}}.shd{{padding:.65rem .75rem}}}}
 {detail_css}
 </style></head><body>
 <div id="tip" role="tooltip"></div>
@@ -323,29 +364,21 @@ th:hover{{color:var(--text)}}
 <div id="view-gmat" class="ctn">
   <div class="hero">
     <h1>Learn from real GMAT debriefs</h1>
-    <p>Hundreds of real test-taker debriefs from r/GMAT and GMAT Club, distilled into one place &mdash;
-    the resources, prep time, and section splits behind every score. Filter to people like you and see what worked.</p>
+    <p>Achieved-score debriefs from r/GMAT and GMAT Club, distilled into one place &mdash;
+    the resources, prep time, section splits, and playbooks behind real outcomes.</p>
   </div>
 
-  <div class="nt warn"><b>How to read this:</b> charts marked <b>(debriefs)</b> count only people who actually
-  <b>achieved</b> the score &mdash; not those still asking how to get there. Tactic labels are assigned from the
-  author's own post and replies; vendor labels require a direct author mention. Small samples + rule-based matching =
-  <b>directional, not proof</b>. Tactics need &ge;4 users to appear.</div>
+  <div class="nt warn"><b>How to read this:</b> v.15 includes only people who actually <b>achieved</b> the score.
+  Tactic labels are assigned from the author's own post and replies; vendor labels require a direct author mention.
+  Small samples + rule-based matching = <b>directional, not proof</b>. Tactics need &ge;4 users to appear.</div>
 
   <!-- sticky filter toolbar -->
   <div class="fbar" id="filterBar">
     <button class="filter-toggle" id="filterToggle" type="button" onclick="toggleFilters()" aria-expanded="false">
-      <span><b>Filters</b><small id="filterSummary">Debriefs | {sdef_min}-{sdef_max}</small></span>
+      <span><b>Filters</b><small id="filterSummary">{sdef_min}-{sdef_max}</small></span>
       <strong id="filterCount"></strong><i aria-hidden="true"></i>
     </button>
   <div class="frow">
-    <div class="fld ftype"><span>Post type</span>
-      <div class="seg" id="segType">
-        <button data-v="Debrief" class="on">Debriefs</button>
-        <button data-v="Asking Question">Questions</button>
-        <button data-v="Other">Other</button>
-      </div>
-    </div>
     <div class="fld fscore"><span>Score range</span>
       <div class="scorectl">
         <div class="range">
@@ -368,6 +401,8 @@ th:hover{{color:var(--text)}}
   </div></div>
 
   <div id="statsRow" class="sts"></div>
+
+  <div class="section-grid" id="sectionCards"></div>
 
   <div class="gr">
     <div class="cd"><h2>Total score distribution</h2><div class="sub">Shows how filtered posts are spread across official scores. Taller bars mean more examples at that score; click a bar to read the matching posts.</div><canvas id="c1"></canvas></div>
@@ -401,19 +436,19 @@ th:hover{{color:var(--text)}}
     </div>
   </div>
 
-  <div class="cd"><h2>All posts</h2><div class="cnt" id="rc"></div>
+  <div class="cd"><h2>All debriefs</h2><div class="cnt" id="rc"></div>
     <div class="ov"><table><thead><tr>
       <th onclick="srt(0)">Date &#x25B4;&#x25BE;</th><th onclick="srt(1)">Title</th>
       <th onclick="srt(2)">Score &#x25B4;&#x25BE;</th><th onclick="srt(3)">Q</th><th onclick="srt(4)">V</th><th onclick="srt(5)">DI</th>
       <th onclick="srt(6)">Prep (wk)</th><th onclick="srt(7)">Resources</th><th onclick="srt(8)">Att.</th>
-      <th onclick="srt(9)">Source</th><th onclick="srt(10)">Tags</th>
+      <th onclick="srt(9)">Source</th><th onclick="srt(10)">Flags</th>
     </tr></thead><tbody id="tb"></tbody></table></div></div>
 </div>
 
 <!-- ===== about view ===== -->
 <div id="view-about" class="ctn"><div class="about">
   <h1 style="font-size:1.6rem">About GMATDebriefs</h1>
-  <p>GMATDebriefs collects real test-takers' debriefs &mdash; the posts where someone who just took the
+  <p>GMATDebriefs collects real test-takers' achieved-score debriefs &mdash; the posts where someone who just took the
   exam shares their score split, the resources they used, how long they studied, and what they'd do
   differently &mdash; and turns hundreds of them into charts you can filter and drill into.</p>
 
@@ -424,11 +459,8 @@ th:hover{{color:var(--text)}}
       <li><b>GMAT Club</b> &mdash; threads from the community's two curated "best debriefs" indexes,
         scraped first post + comments so prep time, dates, and promo signals are read from the full thread.</li>
     </ul>
-    <h3>How posts are classified</h3>
+    <h3>How debriefs are labeled</h3>
     <ul>
-      <li><b>Debrief</b> &mdash; the author actually achieved the score and shares their prep.</li>
-      <li><b>Asking Question</b> &mdash; the author names a target and is seeking advice.</li>
-      <li><b>Other</b> &mdash; mentions a score but isn't a debrief or a question.</li>
       <li><b>Self Study</b> &mdash; used only free resources (GMAT Club, GMAT Ninja, Official Guide, Official Mocks) or no named resource at all.</li>
       <li><b>Maybe Promo</b> &mdash; possible promotional signals; a debrief can be flagged when it reads like vendor copy or readers in the comments question whether it's an ad.</li>
     </ul>
@@ -451,6 +483,9 @@ th:hover{{color:var(--text)}}
 </div><div class="drlbody"><div class="ov"><table><thead><tr>
   <th>Date</th><th>Title</th><th>Score</th><th>Q</th><th>V</th><th>DI</th><th>Prep</th><th>Resources</th><th>Source</th><th>Tags</th>
 </tr></thead><tbody id="drlBody"></tbody></table></div></div></div>
+
+<!-- ===== section insight page (built by JS in openSectionInsight) ===== -->
+<div id="sectionpage"></div>
 
 <!-- ===== post detail page (built by JS in openPost) ===== -->
 <div id="postpage"></div>
@@ -491,10 +526,6 @@ const TIP=(function(){{
 Chart.defaults.color='#94a3b8';Chart.defaults.borderColor='#1f2c44';Chart.defaults.font.family='Inter,system-ui,sans-serif';
 
 /* ---- filter state ---- */
-let TYPE='Debrief';
-const segType=document.getElementById('segType');
-segType.addEventListener('click',e=>{{const b=e.target.closest('button');if(!b)return;
-  [...segType.children].forEach(x=>x.classList.toggle('on',x===b));TYPE=b.dataset.v;updateSliderDomain();applyAll();}});
 const filterBar=document.getElementById('filterBar'),
       filterToggle=document.getElementById('filterToggle'),
       filterSummary=document.getElementById('filterSummary'),
@@ -503,32 +534,18 @@ function toggleFilters(){{
   const open=filterBar.classList.toggle('open');
   filterToggle.setAttribute('aria-expanded',open?'true':'false');
 }}
-function filterTypeLabel(){{
-  if(TYPE==='Debrief')return'Debriefs';
-  if(TYPE==='Asking Question')return'Questions';
-  return'Other';
-}}
 function updateFilterChrome(count){{
   let lo=+sLo.value,hi=+sHi.value;if(lo>hi){{const t=lo;lo=hi;hi=t;}}
-  if(filterSummary)filterSummary.textContent=filterTypeLabel()+' | '+lo+'-'+hi;
+  if(filterSummary)filterSummary.textContent=lo+'-'+hi;
   if(filterCount)filterCount.textContent=count+' match'+(count===1?'':'es');
 }}
 
-/* dual-handle score slider — domain adapts to the active post type */
+/* dual-handle score slider */
 const sLo=document.getElementById('sLo'),sHi=document.getElementById('sHi'),
       sFill=document.getElementById('sFill'),sOut=document.getElementById('sOut');
 const SMAX={smax},SSTEP={sstep};
-const floor5=x=>Math.floor((x-5)/10)*10+5;
-const TYPE_SMIN={{}};['Debrief','Asking Question','Other'].forEach(t=>{{
-  const sc=D.filter(d=>(d.tags||[]).includes(t)).map(d=>d.total).filter(Boolean);
-  TYPE_SMIN[t]=sc.length?floor5(Math.min(...sc)):SMAX;
-}});
-let SMIN=TYPE_SMIN[TYPE]||{smin};
+let SMIN={smin};
 function updateSliderDomain(){{
-  const newMin=TYPE_SMIN[TYPE]||{smin};
-  SMIN=newMin;sLo.min=newMin;sHi.min=newMin;
-  if(+sLo.value<newMin)sLo.value=newMin;
-  if(+sHi.value<newMin)sHi.value=newMin;
   syncSlider();
 }}
 function syncSlider(){{
@@ -554,7 +571,6 @@ function gf(){{
   const self=document.getElementById('fSelf').value;
   const isSelf=d=>(d.tags||[]).includes('Self Study');
   return D.filter(d=>{{
-    if(!(d.tags||[]).includes(TYPE))return false;
     if(d.total<lo||d.total>hi)return false;
     if(d.date<df||d.date>dt)return false;
     if(src&&d.source!==src)return false;
@@ -569,10 +585,10 @@ function gf(){{
     return true;
   }});
 }}
-const deb=arr=>arr.filter(d=>(d.tags||[]).includes('Debrief'));
-const isDeb=()=>TYPE==='Debrief';
+const deb=arr=>arr;
+const isDeb=()=>true;
 function med(a){{if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:Math.round((s[m-1]+s[m])/2)}}
-function tc(t){{if(t==='Debrief')return'tag-debrief';if(t==='Asking Question')return'tag-question';if(t==='Maybe Promo')return'tag-maybe-promo';if(t==='Self Study')return'tag-self-study';return'tag-other'}}
+function tc(t){{if(t==='Maybe Promo')return'tag-maybe-promo';if(t==='Self Study')return'tag-self-study';return'tag-other'}}
 function sc(s){{if(s==='Reddit')return'src-reddit';if(s==='GMAT Club')return'src-gmat-club';return'src-other'}}
 function tHTML(tags,sreason){{return(tags||[]).map(t=>{{let tip=TT[t]||t;if(t==='Maybe Promo'&&sreason)tip=tip+'\n— '+sreason;const ti=tip.replace(/"/g,'&quot;');return`<span class="tag ${{tc(t)}}" data-tiph="${{t}}" data-tip="${{ti}}">${{t}}</span>`}}).join('')}}
 const BANDS=[['650-689',650,689],['690-719',690,719],['720-749',720,749],['750-805',750,805]];
@@ -640,8 +656,11 @@ function openDrill(title,posts){{
   }});
   document.getElementById('drill').classList.add('on');document.body.style.overflow='hidden';
 }}
-function closeDrill(){{document.getElementById('drill').classList.remove('on');document.body.style.overflow='';}}
-document.addEventListener('keydown',e=>{{if(e.key==='Escape')closeDrill();}});
+function closeDrill(){{
+  document.getElementById('drill').classList.remove('on');
+  if(!document.getElementById('sectionpage').classList.contains('on')&&!document.getElementById('postpage').classList.contains('on'))document.body.style.overflow='';
+}}
+document.addEventListener('keydown',e=>{{if(e.key==='Escape'){{if(document.getElementById('drill').classList.contains('on'))closeDrill();else if(document.getElementById('sectionpage').classList.contains('on'))closeSectionInsight();}}}});
 
 function addChartClick(chart,filterFn,labelFn){{
   chart.options.onClick=(evt,items)=>{{if(!items.length)return;const idx=items[0].index;
@@ -652,11 +671,11 @@ function addChartClick(chart,filterFn,labelFn){{
 }}
 
 function rSt(d){{
-  const ss=isDeb()?d:deb(d),scores=ss.map(x=>x.total);
+  const ss=d,scores=ss.map(x=>x.total);
   const qs=ss.filter(x=>x.q).map(x=>x.q),vs=ss.filter(x=>x.v).map(x=>x.v),dis=ss.filter(x=>x.di).map(x=>x.di);
   const gains=ss.filter(x=>x.gain).map(x=>x.gain);
   const f=v=>v==null?'—':v;
-  const lbl=isDeb()?'Debriefs in filter':'Posts in filter';
+  const lbl='Debriefs in filter';
   document.getElementById('statsRow').innerHTML=`
     <div class="st"><div class="n">${{d.length}}</div><div class="l">${{lbl}}</div></div>
     <div class="st"><div class="n">${{f(med(scores))}}</div><div class="l">Median total</div></div>
@@ -676,7 +695,45 @@ function rTb(d){{
     tr.innerHTML=`<td>${{x.date}}</td><td><a href="#" onclick="openPost('${{x.id}}');return false">${{t}}</a></td><td><b>${{x.total}}</b></td><td>${{x.q||'—'}}</td><td>${{x.v||'—'}}</td><td>${{x.di||'—'}}</td><td>${{pw}}</td><td style="font-size:.7rem">${{r}}</td><td>${{x.attempts||'—'}}</td><td><span class="src ${{sc(x.source)}}">${{x.source}}</span></td><td>${{tHTML(x.tags,x.sreason)}}</td>`;
     tb.appendChild(tr);
   }});
-  document.getElementById('rc').textContent=`Showing ${{d.length}} of ${{D.length}} posts`;
+  document.getElementById('rc').textContent=`Showing ${{d.length}} of ${{D.length}} debriefs`;
+}}
+
+const SEC={{
+  q:{{name:'Quant',short:'Q',field:'q',prefix:'Q:',color:'#38bdf8',copy:'Quant-focused debriefs with reported Q scores and Quant tactics or notes.'}},
+  v:{{name:'Verbal',short:'V',field:'v',prefix:'V:',color:'#a78bfa',copy:'Verbal-focused debriefs with reported V scores and CR / RC / pacing tactics or notes.'}},
+  di:{{name:'Data Insights',short:'DI',field:'di',prefix:'DI:',color:'#34d399',copy:'DI-focused debriefs with reported DI scores and Data Sufficiency, MSR, timing, or targeted-practice tactics.'}}
+}};
+const SBANDS=[['<79',0,78],['79-81',79,81],['82-84',82,84],['85-87',85,87],['88-90',88,90]];
+function detailSection(id,key){{
+  const det=DETAIL[id]||{{}}, sec=det.sections||{{}};
+  return sec[SEC[key].short]||[];
+}}
+function sectionRows(pool,key){{
+  const cfg=SEC[key];
+  return pool.filter(d=>d[cfg.field]&&(((d.strat||[]).some(s=>s.startsWith(cfg.prefix)))||detailSection(d.id,key).length));
+}}
+function sectionTacticCounts(rows,cfg){{
+  const cnt={{}};
+  rows.forEach(d=>(d.strat||[]).forEach(s=>{{if(s.startsWith(cfg.prefix))cnt[s]=(cnt[s]||0)+1}}));
+  return Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+}}
+function shortTactic(s){{return s.replace(/^[A-Za-z]+:\s*/,'')}}
+function renderSectionCards(pool){{
+  const root=document.getElementById('sectionCards'); if(!root)return;
+  root.innerHTML=Object.keys(SEC).map(key=>{{
+    const cfg=SEC[key], rows=sectionRows(pool,key), vals=rows.map(d=>d[cfg.field]), gains=rows.filter(d=>d.gain).map(d=>d.gain);
+    const tags=sectionTacticCounts(rows,cfg).slice(0,3).map(([t,n])=>`<span class="mini-tag">${{shortTactic(t)}} · ${{n}}</span>`).join('');
+    return `<button class="section-card" style="--sec:${{cfg.color}}" onclick="openSectionInsight('${{key}}')">
+      <h2>Improve ${{cfg.name}}</h2>
+      <p>${{cfg.copy}}</p>
+      <div class="section-metrics">
+        <div class="section-metric"><b>${{rows.length}}</b><span>debriefs</span></div>
+        <div class="section-metric"><b>${{med(vals)||'—'}}</b><span>median ${{cfg.short}}</span></div>
+        <div class="section-metric"><b>${{gains.length?'+'+med(gains):'—'}}</b><span>median gain</span></div>
+      </div>
+      <div class="mini-tags">${{tags||'<span class="mini-tag">Open insights</span>'}}</div>
+    </button>`;
+  }}).join('');
 }}
 
 function tacticChart(id,prefix,pool){{
@@ -809,6 +866,155 @@ function hmClick(strat,lo,hi){{
   if(posts.length)openDrill(strat+' in '+lo+'-'+hi,posts);
 }}
 
+let SCH={{}};
+function destroySectionCharts(){{Object.values(SCH).forEach(c=>{{try{{c.destroy()}}catch(e){{}}}});SCH={{}}}}
+function closeSectionInsight(){{
+  const sp=document.getElementById('sectionpage');
+  sp.classList.remove('on');sp.innerHTML='';destroySectionCharts();
+  if(!document.getElementById('drill').classList.contains('on')&&!document.getElementById('postpage').classList.contains('on'))document.body.style.overflow='';
+}}
+function openSectionInsight(key){{
+  const cfg=SEC[key], pool=gf(), rows=sectionRows(pool,key);
+  const gains=rows.filter(d=>d.gain).map(d=>d.gain);
+  const stats=[
+    ['Debriefs',rows.length],
+    ['Median '+cfg.short,med(rows.map(d=>d[cfg.field]))||'—'],
+    ['Median total',med(rows.map(d=>d.total))||'—'],
+    ['Median gain',gains.length?'+'+med(gains):'—'],
+    ['With gain data',gains.length],
+    ['With prep weeks',rows.filter(d=>d.prep_weeks).length],
+  ].map(([l,n])=>`<div class="st"><div class="n">${{n}}</div><div class="l">${{l}}</div></div>`).join('');
+  const sp=document.getElementById('sectionpage');
+  sp.style.setProperty('--sec',cfg.color);
+  sp.innerHTML=`<div class="shd">
+    <button class="sback" onclick="closeSectionInsight()">&larr; Back</button>
+    <div class="shd-t"><h2>Improve ${{cfg.name}}</h2><p>${{rows.length}} matching debriefs under the current filters</p></div>
+  </div>
+  <div class="sbody">
+    <div class="snote">These charts analyze debriefs that report a ${{cfg.short}} score and contain ${{cfg.name}} tactics or section notes. They show directional patterns from achieved-score debriefs, not guaranteed score-delta causes.</div>
+    <div class="smetric-row">${{stats}}</div>
+    <div class="sgrid">
+      <div class="cd"><h2>What separates high ${{cfg.short}} scorers?</h2><div class="sub">Overrepresentation among ${{cfg.short}}88-90 debriefs versus the rest of this section cohort. Click a bar to read high-score examples.</div><canvas id="secDiff"></canvas></div>
+      <div class="cd"><h2>Playbook bundles</h2><div class="sub">Common combinations of section tactics and general habits, ranked by median final ${{cfg.short}} score. Click a bundle to inspect examples.</div><canvas id="secBundles"></canvas></div>
+    </div>
+    <div class="sgrid three">
+      <div class="cd"><h2>${{cfg.name}} bottlenecks</h2><div class="sub">Debriefs where ${{cfg.short}} is the lowest reported section. Shows what those students mention most.</div><canvas id="secBottleneck"></canvas></div>
+      <div class="cd"><h2>Prep time vs ${{cfg.short}} outcome</h2><div class="sub">Median final ${{cfg.short}} score by prep-length bucket, among debriefs that stated prep time.</div><canvas id="secPrep"></canvas></div>
+      <div class="cd"><h2>Section balance</h2><div class="sub">X = final ${{cfg.short}} score, Y = weaker of the other two reported sections. Click a point to read the debrief.</div><canvas id="secBalance"></canvas></div>
+    </div>
+    <div class="sgrid full">
+      <div class="cd"><h2>Playbook by ${{cfg.short}} score band</h2><div class="sub">Share of each section-score band mentioning section tactics and core general habits. Click a cell to read matching debriefs.</div>
+        <div class="ov"><div id="secHeat"></div></div>
+        <div class="legend"><span>0%</span><span class="sw" style="background:rgba(56,189,248,.08)"></span><span class="sw" style="background:rgba(56,189,248,.4)"></span><span class="sw" style="background:rgba(56,189,248,.75)"></span><span class="sw" style="background:rgba(56,189,248,1)"></span><span>most common</span></div>
+      </div>
+    </div>
+    <div class="cd"><h2>Matching debriefs</h2><div class="cnt">${{rows.length}} debriefs sorted by final ${{cfg.short}} score</div>
+      <div class="ov"><table><thead><tr><th>Date</th><th>Title</th><th>Total</th><th>Q</th><th>V</th><th>DI</th><th>Gain</th><th>Resources</th><th>Flags</th></tr></thead><tbody id="secRows"></tbody></table></div>
+    </div>
+  </div>`;
+  sp.classList.add('on');document.body.style.overflow='hidden';
+  renderSectionInsightCharts(key,rows);
+}}
+function renderSectionInsightCharts(key,rows){{
+  destroySectionCharts();
+  const cfg=SEC[key], field=cfg.field, base=med(rows.map(d=>d[field]).filter(Boolean))||0;
+  renderSecRows(key,rows);
+  const high=rows.filter(d=>d[field]>=88), rest=rows.filter(d=>d[field]<88);
+  const sigs=[...new Set(rows.flatMap(d=>(d.strat||[]).filter(s=>s.startsWith(cfg.prefix)||s.startsWith('General:'))))];
+  const diffRows=sigs.map(s=>{{
+    const hi=high.filter(d=>(d.strat||[]).includes(s)), lo=rest.filter(d=>(d.strat||[]).includes(s));
+    if(hi.length<3)return null;
+    const hp=high.length?Math.round(100*hi.length/high.length):0, lp=rest.length?Math.round(100*lo.length/rest.length):0;
+    return {{s,hp,lp,delta:hp-lp,n:hi.length,posts:hi}};
+  }}).filter(Boolean).sort((a,b)=>b.delta-a.delta).slice(0,10);
+  makeNoData('secDiff',diffRows.length,'Need at least three high-score examples per signal.');
+  if(diffRows.length){{SCH.diff=new Chart(document.getElementById('secDiff'),{{type:'bar',data:{{labels:diffRows.map(r=>`${{shortTactic(r.s)}} (n=${{r.n}})`),datasets:[{{data:diffRows.map(r=>r.delta),backgroundColor:diffRows.map(r=>r.delta>=0?'#34d399':'#64748b'),borderRadius:4}}]}},
+    options:{{indexAxis:'y',plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{title:items=>diffRows[items[0].dataIndex].s,afterBody:items=>glossLines(diffRows[items[0].dataIndex].s),label:c=>{{const r=diffRows[c.dataIndex];return [`High ${{cfg.short}}88-90: ${{r.hp}}%`,`Lower ${{cfg.short}}: ${{r.lp}}%`,`Difference: ${{r.delta>=0?'+':''}}${{r.delta}} pts`]}}}}}}}},scales:{{x:{{title:{{display:true,text:'Percentage-point lift among '+cfg.short+'88-90'}}}},y:{{ticks:{{font:{{size:10}}}}}}}}}}}});
+    addChartClick(SCH.diff,(f,i)=>diffRows[i].posts,i=>diffRows[i].s+' among high '+cfg.short);}}
+
+  const bundleRows=buildBundles(rows,cfg,field);
+  makeNoData('secBundles',bundleRows.length,'No repeated tactic bundle has enough examples.');
+  if(bundleRows.length){{SCH.bundles=new Chart(document.getElementById('secBundles'),{{type:'bar',data:{{labels:bundleRows.map(r=>`${{r.label}} (n=${{r.n}})`),datasets:[{{data:bundleRows.map(r=>r.med),backgroundColor:bundleRows.map(r=>r.med>=base?'#34d399':'#64748b'),borderRadius:4}}]}},
+    options:{{indexAxis:'y',plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:c=>{{const r=bundleRows[c.dataIndex];return [`Median ${{cfg.short}}: ${{r.med}}`,`Median total: ${{r.totalMed}}`,`n=${{r.n}}`]}}}}}}}},scales:{{x:{{min:Math.max(60,Math.min(...bundleRows.map(r=>r.med))-2),max:90,title:{{display:true,text:'Median '+cfg.short+' score'}}}},y:{{ticks:{{font:{{size:10}}}}}}}}}}}});
+    addChartClick(SCH.bundles,(f,i)=>bundleRows[i].posts,i=>bundleRows[i].label);}}
+
+  const bottleneck=rows.filter(d=>isBottleneck(d,key));
+  const bRows=topSignals(bottleneck,cfg).slice(0,8);
+  makeNoData('secBottleneck',bRows.length,'No bottleneck cohort with reported companion section scores.');
+  if(bRows.length){{SCH.bottleneck=new Chart(document.getElementById('secBottleneck'),{{type:'bar',data:{{labels:bRows.map(r=>shortTactic(r.s)),datasets:[{{data:bRows.map(r=>r.n),backgroundColor:'#f59e0b',borderRadius:4}}]}},
+    options:{{indexAxis:'y',plugins:{{legend:{{display:false}},title:{{display:true,text:`${{bottleneck.length}} debriefs where ${{cfg.short}} is lowest`,color:'#94a3b8',font:{{size:11}}}},tooltip:{{callbacks:{{title:items=>bRows[items[0].dataIndex].s,afterBody:items=>glossLines(bRows[items[0].dataIndex].s),label:c=>`${{c.raw}} bottleneck debriefs`}}}}}},scales:{{x:{{beginAtZero:true,ticks:{{stepSize:1}}}},y:{{ticks:{{font:{{size:10}}}}}}}}}}}});
+    addChartClick(SCH.bottleneck,(f,i)=>bRows[i].posts,i=>cfg.name+' bottleneck · '+bRows[i].s);}}
+
+  const TB=[['0-4',0,4],['5-8',5,8],['9-12',9,12],['13-24',13,24],['25+',25,999]];
+  const prepRows=TB.map(b=>{{const ps=rows.filter(d=>d.prep_weeks&&d.prep_weeks>=b[1]&&d.prep_weeks<=b[2]);return {{b,ps,med:med(ps.map(d=>d[field]).filter(Boolean))}}}});
+  SCH.prep=new Chart(document.getElementById('secPrep'),{{type:'bar',data:{{labels:prepRows.map(r=>r.b[0]+'w'),datasets:[{{data:prepRows.map(r=>r.med),backgroundColor:cfg.color,borderRadius:5}}]}},
+    options:{{plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:c=>{{const r=prepRows[c.dataIndex];return [`Median ${{cfg.short}}: ${{c.raw||'—'}}`,`n=${{r.ps.length}}`]}}}}}}}},scales:{{y:{{min:60,max:90,title:{{display:true,text:'Median '+cfg.short+' score'}}}},x:{{title:{{display:true,text:'Prep time'}}}}}}}}}});
+  addChartClick(SCH.prep,(f,i)=>prepRows[i].ps,i=>prepRows[i].b[0]+' weeks · '+cfg.short);
+
+  const balancePts=rows.map(d=>balancePoint(d,key)).filter(Boolean);
+  SCH.balance=new Chart(document.getElementById('secBalance'),{{type:'scatter',data:{{datasets:[{{data:balancePts,backgroundColor:balancePts.map(p=>p._p.total>=730?'#34d399':cfg.color),pointRadius:5,pointHoverRadius:7}}]}},
+    options:{{plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:c=>{{const p=c.raw._p;return [p.title.slice(0,48),`${{cfg.short}}${{p[field]}} vs other-low ${{c.raw.y}}`,`Total ${{p.total}}`]}}}}}}}},scales:{{x:{{min:60,max:90,title:{{display:true,text:'Final '+cfg.short+' score'}}}},y:{{min:60,max:90,title:{{display:true,text:'Weaker of other two sections'}}}}}}}}}});
+  SCH.balance.options.onClick=(evt,items)=>{{if(!items.length)return;const p=SCH.balance.data.datasets[0].data[items[0].index]._p;openDrill(`${{cfg.short}}${{p[field]}} balance`,[p]);}};
+  SCH.balance.options.onHover=(evt,items)=>{{if(evt.native&&evt.native.target)evt.native.target.style.cursor=items.length?'pointer':'default'}};
+  SCH.balance.update();
+  renderSecHeat(key,rows);
+}}
+function makeNoData(id,ok,msg){{if(ok)return;const el=document.getElementById(id);if(el&&el.closest('.cd'))el.closest('.cd').querySelector('.sub').textContent=msg;}}
+function topSignals(rows,cfg){{
+  const cnt={{}};rows.forEach(d=>(d.strat||[]).forEach(s=>{{if(s.startsWith(cfg.prefix)||s.startsWith('General:'))(cnt[s]||(cnt[s]=[])).push(d)}}));
+  return Object.entries(cnt).filter(([s,ps])=>ps.length>=3).map(([s,ps])=>({{s,n:ps.length,posts:ps}})).sort((a,b)=>b.n-a.n);
+}}
+function bundleFor(d,cfg){{
+  const sect=(d.strat||[]).filter(s=>s.startsWith(cfg.prefix)).slice(0,2).map(shortTactic);
+  const gen=(d.strat||[]).filter(s=>['General: official mocks & review','General: error log & mistake review','General: section-order testing','General: test-day routine & mindset'].includes(s)).slice(0,1).map(shortTactic);
+  return [...sect,...gen].slice(0,3);
+}}
+function buildBundles(rows,cfg,field){{
+  const map={{}};rows.forEach(d=>{{const parts=bundleFor(d,cfg);if(parts.length<2)return;const label=parts.join(' + ');(map[label]||(map[label]=[])).push(d);}});
+  return Object.entries(map).filter(([label,ps])=>ps.length>=4).map(([label,ps])=>({{label,posts:ps,n:ps.length,med:med(ps.map(d=>d[field]).filter(Boolean)),totalMed:med(ps.map(d=>d.total).filter(Boolean))}})).filter(r=>r.med).sort((a,b)=>b.med-a.med||b.n-a.n).slice(0,10);
+}}
+function isBottleneck(d,key){{
+  const cfg=SEC[key], vals=[d.q,d.v,d.di].filter(x=>x);if(vals.length<2||!d[cfg.field])return false;
+  return d[cfg.field]===Math.min(...vals);
+}}
+function balancePoint(d,key){{
+  const cfg=SEC[key];if(!d[cfg.field])return null;
+  const others=Object.keys(SEC).filter(k=>k!==key).map(k=>d[SEC[k].field]).filter(x=>x);
+  if(!others.length)return null;
+  return {{x:d[cfg.field],y:Math.min(...others),_p:d}};
+}}
+function renderSecRows(key,rows){{
+  const cfg=SEC[key], tb=document.getElementById('secRows'); if(!tb)return; tb.innerHTML='';
+  rows.slice().sort((a,b)=>(b[cfg.field]||0)-(a[cfg.field]||0)||(b.total||0)-(a.total||0)).forEach(x=>{{
+    const r=(x.resources||[]).slice(0,3).join(', ')||'—', t=x.title.length>54?x.title.slice(0,54)+'…':x.title;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${{x.date}}</td><td><a href="#" onclick="openPost('${{x.id}}');return false">${{t}}</a></td><td><b>${{x.total}}</b></td><td>${{x.q||'—'}}</td><td>${{x.v||'—'}}</td><td>${{x.di||'—'}}</td><td>${{x.gain?'+'+x.gain:'—'}}</td><td style="font-size:.7rem">${{r}}</td><td>${{tHTML(x.tags,x.sreason)}}</td>`;
+    tb.appendChild(tr);
+  }});
+}}
+function renderSecHeat(key,rows){{
+  const cfg=SEC[key], field=cfg.field;
+  const heatItems=[...sectionTacticCounts(rows,cfg).filter(x=>x[1]>=4).map(x=>x[0]),
+    'General: official mocks & review','General: error log & mistake review','General: section-order testing','General: test-day routine & mindset'
+  ].filter((v,i,a)=>a.indexOf(v)===i);
+  const bandRows=SBANDS.map(b=>rows.filter(d=>d[field]>=b[1]&&d[field]<=b[2]));
+  let maxPct=1,cells={{}};
+  heatItems.forEach(it=>{{cells[it]=bandRows.map(br=>{{if(!br.length)return null;const u=br.filter(d=>(d.strat||[]).includes(it)).length,p=Math.round(100*u/br.length);maxPct=Math.max(maxPct,p);return {{u,p,tot:br.length}};}})}});
+  let h='<table class="hm"><thead><tr><th style="text-align:left">Tactic ↓ &nbsp; '+cfg.short+' band →</th>';
+  SBANDS.forEach((b,i)=>h+=`<th>${{b[0]}}<br><span style="font-weight:400">n=${{bandRows[i].length}}</span></th>`);h+='</tr></thead><tbody>';
+  heatItems.forEach(it=>{{const isGen=it.startsWith('General:'), color=isGen?'#34d399':cfg.color;
+    h+=`<tr><td class="lab sub" style="color:${{color}}" data-tiph="${{it}}" data-tip="${{(GLOSS[it]||'No description available.').replace(/"/g,'&quot;')}}">${{shortTactic(it)}}</td>`;
+    cells[it].forEach((cell,bi)=>{{if(!cell)h+='<td style="background:#0b1120;color:#475569">—</td>';else{{const a=Math.max(.06,cell.p/maxPct), col=a>.6?'#0b1120':'#e2e8f0';
+      h+=`<td style="background:rgba(56,189,248,${{a.toFixed(2)}});color:${{col}}" data-tiph="${{shortTactic(it)}} · ${{SBANDS[bi][0]}}" data-tip="${{cell.p}}% of ${{SBANDS[bi][0]}} debriefs used this&#10;(${{cell.u}} of ${{cell.tot}}).&#10;Click to read those posts." onclick="secHmClick('${{key}}','${{it.replace(/'/g,"\\'")}}',${{SBANDS[bi][1]}},${{SBANDS[bi][2]}})">${{cell.p}}%</td>`;}}}});
+    h+='</tr>';
+  }});
+  h+='</tbody></table>';document.getElementById('secHeat').innerHTML=h;
+}}
+function secHmClick(key,strat,lo,hi){{
+  const cfg=SEC[key], rows=sectionRows(gf(),key).filter(d=>d[cfg.field]>=lo&&d[cfg.field]<=hi&&(d.strat||[]).includes(strat));
+  if(rows.length)openDrill(shortTactic(strat)+' · '+cfg.short+' '+lo+'-'+hi,rows);
+}}
+
 function applyAll(){{
   const f=gf();
   const matchText=f.length+' match'+(f.length===1?'':'es');
@@ -816,10 +1022,10 @@ function applyAll(){{
   updateFilterChrome(f.length);
   try{{rTb(f)}}catch(e){{console.error('table',e)}}
   try{{rSt(f)}}catch(e){{console.error('stats',e)}}
+  try{{renderSectionCards(f)}}catch(e){{console.error('section cards',e)}}
   try{{rCh(f)}}catch(e){{console.error('charts',e)}}
 }}
 function resetAll(){{
-  TYPE='Debrief';[...segType.children].forEach(x=>x.classList.toggle('on',x.dataset.v==='Debrief'));
   updateSliderDomain();sLo.value=SMIN;sHi.value={sdef_max};syncSlider();
   document.getElementById('fDF').value='{min_date}';document.getElementById('fDT').value='{max_date}';
   ['fSrc','fRes','fAtt','fSpon','fSelf'].forEach(id=>document.getElementById(id).value='');
@@ -859,7 +1065,6 @@ DETAIL_CSS = r"""
 .dorig{display:inline-flex;align-items:center;gap:.35rem;background:#16233a;border:1px solid var(--accent);
   color:var(--accent);border-radius:8px;padding:.45rem .8rem;font-weight:700;font-size:.8rem;white-space:nowrap}
 .dorig:hover{background:#1c2c46;text-decoration:none}
-.dorig-lg{margin-top:1rem;font-size:.88rem;padding:.6rem 1rem}
 .dbody{max-width:1080px;margin:0 auto;padding:1.1rem 1.2rem 4rem}
 .dsummary{font-size:.98rem;color:var(--text);background:#16233a;border-left:3px solid var(--accent);
   padding:.7rem .9rem;border-radius:0 8px 8px 0;margin-bottom:1rem}
@@ -893,9 +1098,6 @@ DETAIL_CSS = r"""
   border-radius:50%;background:var(--c)}
 .dnone{font-size:.78rem;color:var(--muted);font-style:italic}
 .doverall{font-size:.9rem;line-height:1.6;color:#cbd5e1;margin-top:.4rem}
-.dquote{margin-top:1.2rem}
-.dquote-body{white-space:pre-wrap;font-size:.84rem;line-height:1.6;color:#cbd5e1;background:#0b1120;
-  border:1px solid var(--border);border-radius:8px;padding:.9rem 1rem;max-height:380px;overflow-y:auto}
 .dreschips{display:flex;flex-wrap:wrap;gap:.4rem}
 .dreschip{font-size:.72rem;font-weight:700;color:#fde68a;background:#2a1f12;border:1px solid #b45309;
   border-radius:6px;padding:.2rem .55rem}
@@ -967,8 +1169,6 @@ function openPost(id){
       : '';
 
   const srcClass = sc(row.source);
-  const origLabel = row.source === 'Reddit' ? 'Reddit' : (row.source==='GMAT Club'?'GMAT Club':row.source);
-
   document.getElementById('postpage').innerHTML = `
     <div class="dhd">
       <button class="dback" onclick="closeP()">&larr; Back</button>
@@ -1000,11 +1200,6 @@ function openPost(id){
         ${secBlock('Data Insights', '#34d399', row.di, tac.DI, sec.DI)}
       </div>
       ${genBlock}
-      <div class="dcard dquote"><h3>In their own words</h3>
-        <div class="dsub">The author's full debrief plus their comment replies, verbatim.</div>
-        <div class="dquote-body">${esc(det.body || '(No body text was captured for this post — open the original.)')}</div>
-        <a class="dorig dorig-lg" href="${row.permalink}" target="_blank" rel="noopener">Read &amp; reply on the original (${esc(origLabel)}) &#8599;</a>
-      </div>
     </div>`;
 
   Object.values(PCH).forEach(c=>{ try{c.destroy()}catch(e){} }); PCH = {};
@@ -1020,7 +1215,7 @@ function doCloseP(){
   const pp = document.getElementById('postpage');
   pp.classList.remove('on'); pp.innerHTML = '';
   Object.values(PCH).forEach(c=>{ try{c.destroy()}catch(e){} }); PCH = {};
-  if(!document.getElementById('drill').classList.contains('on')) document.body.style.overflow = '';
+  if(!document.getElementById('drill').classList.contains('on') && !document.getElementById('sectionpage').classList.contains('on')) document.body.style.overflow = '';
 }
 function closeP(){ if(history.state && history.state.pp){ history.back(); } else { doCloseP(); } }
 window.addEventListener('popstate', () => {
